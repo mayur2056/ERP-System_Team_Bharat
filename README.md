@@ -6,7 +6,7 @@ A robust, enterprise-grade ERP system designed for distributed electronics and e
 ---
 
 ## 🏗️ System Architecture
-- **Backend**: Node.js & Express.js
+- **Backend**: Node.js & Express.js.
 - **Database**: MySQL (Robust Relations & Triggers)
 - **Frontend**: Clean, Modern Vanilla JS & CSS (Zero-dependency, high performance)
 - **Security**: JWT-based Authentication & Role-Based Access Control (RBAC)
