@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shivam Enterprises ERP — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;
+--sidebar-bg:#0f172a;--sidebar-text:#94a3b8;--sidebar-hover:#1e293b;
+--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+--surface:#fff;--bg:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;
+--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1);
+--shadow-lg:0 10px 25px rgba(0,0,0,.1);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#6366f1 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s}
+#splash .logo-icon{font-size:64px;color:#818cf8;margin-bottom:16px;animation:pulse 1.5s infinite}
+#splash h1{color:#fff;font-size:28px;font-weight:700;letter-spacing:-0.5px}
+#splash p{color:#94a3b8;margin-top:8px;font-size:14px}
+#splash .loader{margin-top:32px;width:48px;height:48px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* LOGIN */
+#login{position:fixed;inset:0;z-index:9998;background:linear-gradient(135deg,#0f172a,#1e293b);display:none;align-items:center;justify-content:center}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.login-card .brand{text-align:center;margin-bottom:32px}
+.login-card .brand i{font-size:40px;color:var(--primary)}
+.login-card .brand h2{font-size:22px;margin-top:8px;font-weight:700}
+.login-card .brand p{color:var(--text-secondary);font-size:13px;margin-top:4px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s;background:#fff}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff;width:100%;justify-content:center;padding:12px}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.4)}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.login-error{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+/* APP LAYOUT */
+#app{display:none;height:100vh;overflow:hidden}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:fixed;top:0;left:250px;right:0;z-index:100}
+.topbar .left{display:flex;align-items:center;gap:12px}
+.topbar .left h3{font-size:16px;font-weight:600}
+.topbar .right{display:flex;align-items:center;gap:16px}
+.topbar .notif{position:relative;cursor:pointer;font-size:22px;color:var(--text-secondary)}
+.topbar .notif .badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;display:none}
+.topbar .user-info{display:flex;align-items:center;gap:10px;cursor:pointer}
+.topbar .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.topbar .user-name{font-size:14px;font-weight:600}
+.topbar .user-role{font-size:11px;color:var(--text-secondary)}
+.sidebar{width:250px;height:100vh;background:var(--sidebar-bg);position:fixed;left:0;top:0;z-index:200;display:flex;flex-direction:column;transition:width .3s}
+.sidebar .brand{padding:20px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e293b}
+.sidebar .brand i{font-size:28px;color:var(--primary-light)}
+.sidebar .brand span{color:#fff;font-size:16px;font-weight:700}
+.sidebar nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;color:var(--sidebar-text);text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;margin-bottom:4px;transition:all .2s;cursor:pointer}
+.sidebar nav a:hover,.sidebar nav a.active{background:var(--sidebar-hover);color:#fff}
+.sidebar nav a.active{background:var(--primary);color:#fff}
+.sidebar nav a i{font-size:20px}
+.main{margin-left:250px;margin-top:60px;padding:24px;height:calc(100vh - 60px);overflow-y:auto}
+.view{display:none}
+.view.active{display:block}
+/* CARDS */
+.grid{display:grid;gap:20px}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.card h3{font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card .value{font-size:28px;font-weight:800;color:var(--text)}
+.card .change{font-size:12px;font-weight:600;margin-top:4px}
+.card .change.up{color:var(--success)}
+.card .change.down{color:var(--danger)}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8fafc;padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid #f1f5f9}
+tr:hover{background:#f8fafc}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+.badge-green{background:#d1fae5;color:#065f46}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-gray{background:#f1f5f9;color:#475569}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0}
+.tab-btn{padding:10px 20px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-content{display:none}.tab-content.active{display:block}
+/* SEARCH */
+.search-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.search-bar input,.search-bar select{padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}
+.search-bar input{flex:1;min-width:200px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-header h2{font-size:18px;font-weight:700}
+.chart-box{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.chart-box h3{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-secondary)}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:8px;margin-bottom:8px;font-size:13px}
+.alert-item.error{background:#fef2f2;border-left:3px solid var(--danger)}
+.alert-item.warning{background:#fffbeb;border-left:3px solid var(--warning)}
+.alert-item.info{background:#eff6ff;border-left:3px solid var(--info)}
+.alert-item.success{background:#f0fdf4;border-left:3px solid var(--success)}
+.text-right{text-align:right} .mt-20{margin-top:20px} .mb-20{margin-bottom:20px}
+</style>
+</head>
+<body>
+<!-- SPLASH -->
+<div id="splash">
+<i class="ph ph-lightning" style="font-size:64px;color:#818cf8;animation:pulse 1.5s infinite"></i>
+<h1>Shivam Enterprises</h1>
+<p>Enterprise Resource Planning System</p>
+<div class="loader"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+<div class="login-card">
+<div class="brand">
+<i class="ph ph-lightning"></i>
+<h2>Shivam Enterprises</h2>
+<p>Admin Control Panel</p>
+</div>
+<div class="form-group"><label>Email Address</label><input type="email" id="loginUser" placeholder="Enter email" value="admin@shivamenterprise.com"></div>
+<div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password" value="Password@123"></div>
+<div class="login-error" id="loginError">Invalid credentials</div>
+<button class="btn btn-primary" onclick="doLogin()" id="loginBtn"><i class="ph ph-sign-in"></i> Sign In</button>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div class="brand"><i class="ph ph-lightning"></i><span>Shivam ERP</span></div>
+<nav>
+<a class="active" onclick="navigate('dashboard',this)"><i class="ph ph-squares-four"></i><span>Dashboard</span></a>
+<a onclick="navigate('users',this)"><i class="ph ph-users-three"></i><span>User Management</span></a>
+<a onclick="navigate('inventory',this)"><i class="ph ph-package"></i><span>Inventory</span></a>
+<a onclick="navigate('reports',this)"><i class="ph ph-chart-bar"></i><span>Reports</span></a>
+<a onclick="navigate('settings',this)"><i class="ph ph-gear"></i><span>Settings</span></a>
+<a onclick="api.logout()" style="margin-top:20px;color:var(--danger)"><i class="ph ph-sign-out"></i><span>Logout</span></a>
+</nav>
+</div>
+<!-- TOPBAR -->
+<div class="topbar">
+<div class="left"><h3 id="pageTitle">Dashboard</h3></div>
+<div class="right">
+<div class="notif"><i class="ph ph-bell"></i><div class="badge" id="unreadCount">0</div></div>
+<div class="user-info">
+<div class="avatar" id="topAvatar">SA</div>
+<div><div class="user-name" id="topName">Shivam Admin</div><div class="user-role" id="topRole">Super Admin</div></div>
+</div>
+</div>
+</div>
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent"></div>
+</div>
+
+<!-- Include Shared API -->
+<script src="api.js"></script>
+
+<script>
+const ERP = {
+  currency: '₹',
+  roles: [{value:'admin',label:'Admin'},{value:'branch_manager',label:'Branch Manager'},{value:'sales_warehouse',label:'Sales & Warehouse'},{value:'accountant',label:'Accountant'}],
+  categories: ['Cables','Switchgear','Lighting','Panels','Power','Accessories']
+};
+
+let charts = {};
+const titles = {dashboard:'Dashboard',users:'User Management',inventory:'Inventory View',reports:'Reports',settings:'Settings'};
+let currentView = 'dashboard';
+
+// Initialize App
+setTimeout(() => {
+  document.getElementById('splash').style.opacity = '0';
+  setTimeout(checkAuthSession, 600);
+}, 1500);
+
+async function checkAuthSession() {
+  document.getElementById('splash').style.display = 'none';
+  const token = api.getToken();
+  if (token) {
+    try {
+      const res = await api.get('/auth/me');
+      if (res.data.role !== 'admin') {
+        alert("ACCESS DENIED: This panel strictly requires Super Admin credentials.");
+        api.logout();
+        document.getElementById('login').style.display = 'flex';
+        return;
+      }
+      setupUserUI();
+      document.getElementById('app').style.display = 'flex';
+      navigate('dashboard');
+      fetchUnreadAlerts();
+    } catch(err) {
+      document.getElementById('login').style.display = 'flex';
+    }
+  } else {
+    document.getElementById('login').style.display = 'flex';
+  }
+}
+
+async function fetchUnreadAlerts() {
+  try {
+    const res = await api.get('/notifications/count');
+    const badge = document.getElementById('unreadCount');
+    if(res.data.unread > 0) {
+      badge.style.display = 'flex';
+      badge.innerText = res.data.unread;
+    } else badge.style.display = 'none';
+  } catch(e) {}
+}
+
+function setupUserUI() {
+  // Admin dashboard hardcodes the display context to avoid role bleeding
+  document.getElementById('topName').innerText = "Shivam Admin";
+  document.getElementById('topRole').innerText = "Super Admin";
+  document.getElementById('topAvatar').innerText = "SA";
+}
+
+async function doLogin() {
+  const e=document.getElementById('loginUser').value, p=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginError'), btn=document.getElementById('loginBtn');
+  if(!e||!p) return;
+  
+  btn.innerText = "Signing in...";
+  try {
+    const res = await api.post('/auth/login', {email: e, password: p});
+    if(res.user.role !== 'admin') {
+      alert("ACCESS DENIED: This panel is restricted to Administrators.");
+      btn.innerText = "Sign In";
+      return;
+    }
+
+    localStorage.setItem('erp_token', res.token);
+    localStorage.setItem('erp_user', JSON.stringify(res.user));
+    
+    document.getElementById('login').style.display='none';
+    setupUserUI();
+    document.getElementById('app').style.display='flex';
+    navigate('dashboard');
+    fetchUnreadAlerts();
+  } catch(err) {
+    errEl.innerText = err.message || 'Invalid credentials';
+    errEl.style.display='block';
+  } finally {
+    btn.innerHTML = `<i class="ph ph-sign-in"></i> Sign In`;
+  }
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if(c && c.destroy) c.destroy() });
+  charts = {};
+}
+
+async function navigate(view, el=null) {
+  currentView = view;
+  document.getElementById('pageTitle').textContent = titles[view] || view;
+  
+  if (el) {
+    document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active'));
+    el.classList.add('active');
+  }
+  
+  const m = document.getElementById('mainContent');
+  m.innerHTML = '<div style="text-align:center;padding:40px"><div class="loader" style="margin:0 auto"></div><p style="margin-top:20px;color:var(--text-secondary)">Loading Data...</p></div>';
+  
+  destroyCharts();
+  
+  try {
+    if(view==='dashboard') await renderDashboard(m);
+    else if(view==='users') await renderUsers(m);
+    else if(view==='inventory') await renderInventory(m);
+    else if(view==='reports') await renderReports(m);
+    else if(view==='settings') renderSettings(m);
+  } catch(err) {
+    m.innerHTML = `<div class="alert-item error"><i class="ph ph-warning"></i> Error loading ${view}: ${err.message}</div>`;
+  }
+}
+
+// ================= DATA LOGIC =================
+
+async function renderDashboard(el) {
+  const res = await api.get('/dashboard/admin');
+  const d = res.data;
+  
+  el.innerHTML = `
+<div class="grid grid-4 mb-20">
+  <div class="card"><div class="kpi-icon" style="background:#eef2ff;color:var(--primary)"><i class="ph ph-shopping-cart"></i></div><h3>Total Orders</h3><div class="value">${d.orders.total_orders||0}</div><div class="change"><span class="badge badge-yellow">${d.orders.pending_orders||0} pending</span></div></div>
+  <div class="card"><div class="kpi-icon" style="background:#d1fae5;color:var(--success)"><i class="ph ph-currency-inr"></i></div><h3>Total Revenue (30d)</h3><div class="value">${ERP.currency}${Number(d.orders.total_revenue||0).toLocaleString('en-IN')}</div><div class="change up">▲ Growth</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fef3c7;color:var(--warning)"><i class="ph ph-package"></i></div><h3>Low Stock Alerts</h3><div class="value" style="${d.low_stock>0?'color:var(--danger)':''}">${d.low_stock||0}</div><div class="change">Items need reorder</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#ede9fe;color:#7c3aed"><i class="ph ph-users"></i></div><h3>Active Users</h3><div class="value">${d.users.total_users||0}</div><div class="change">Across ${d.branch_revenue.length} branches</div></div>
+</div>
+<div class="grid grid-2 mb-20">
+  <div class="card"><h3><i class="ph ph-chart-line-up"></i> Branch Revenue Comparison</h3>
+    <div class="table-wrap mt-20"><table><thead><tr><th>Branch Name</th><th>Revenue (30d)</th></tr></thead><tbody>
+      ${d.branch_revenue.map(b=>`<tr><td><strong>${b.branch_name||'Head Office'}</strong></td><td>${ERP.currency}${Number(b.revenue||0).toLocaleString('en-IN')}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="card"><h3><i class="ph ph-rocket"></i> Quick Tasks</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px">
+      <button class="btn btn-outline" onclick="navigate('inventory')"><i class="ph ph-package"></i> View Inventory</button>
+      <button class="btn btn-outline" onclick="navigate('users')"><i class="ph ph-users"></i> Manage Users</button>
+      <button class="btn btn-outline" onclick="navigate('reports')"><i class="ph ph-chart-bar"></i> Full Reports</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// Users
+let globalUsers = [], globalBranches = [];
+async function renderUsers(el) {
+  const [uRes, bRes] = await Promise.all([api.get('/users'), api.get('/branches')]);
+  globalUsers = uRes.data;
+  globalBranches = bRes.data;
+  
+  const roleOpts = ERP.roles.map(r=>`<option value="${r.value}">${r.label}</option>`).join('');
+  const branchOpts = globalBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  
+  el.innerHTML = `
+<div class="grid grid-2 mb-20">
+  <div class="card"><h3><i class="ph ph-user-plus"></i> Create / Edit User</h3>
+    <div id="userFormMsg" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+    <div class="form-group"><label>Full Name</label><input id="uName" placeholder="Enter full name"></div>
+    <div class="form-group"><label>Email</label><input id="uEmail" type="email" placeholder="Enter email"></div>
+    <div class="form-group"><label>Password (Leave blank to keep)</label><input id="uPass" type="password" placeholder="Enter password"></div>
+    <div class="form-group"><label>Role</label><select id="uRole">${roleOpts}</select></div>
+    <div class="form-group"><label>Branch</label><select id="uBranch"><option value="">Global (Admin)</option>${branchOpts}</select></div>
+    <div class="form-group"><label>Status</label><select id="uStatus"><option value="1">Active</option><option value="0">Inactive</option></select></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="width:auto" onclick="saveUser()"><i class="ph ph-check"></i> Save User</button>
+      <button class="btn btn-outline" id="cancelEditBtn" style="display:none" onclick="cancelUserEdit()">Cancel</button>
+    </div>
+  </div>
+  <div class="card"><h3><i class="ph ph-shield-check"></i> Role Permissions Info</h3>
+    <div style="font-size:13px;line-height:1.6;color:var(--text-secondary)">
+      <p><strong>Admin:</strong> Global unrestricted access to all endpoints and branches.</p>
+      <p><strong>Branch Manager:</strong> Full operational access restricted to their assigned branch. Can approve orders and transfers.</p>
+      <p><strong>Sales & Warehouse:</strong> Can create orders, dispatch, and track inventory for their assigned branch.</p>
+      <p><strong>Accountant:</strong> Cross-branch financial access. Cannot modify inventory or user data.</p>
+    </div>
+  </div>
+</div>
+<div class="card"><div class="section-header"><h3><i class="ph ph-users"></i> System Users</h3></div>
+  <div class="table-wrap mt-20"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+  <tbody id="usersTableBody">${renderUserRows(globalUsers)}</tbody></table></div>
+</div>`;
+}
+
+function renderUserRows(users) {
+  return users.map(u => `<tr>
+    <td><strong>${u.name}</strong></td>
+    <td>${u.email}</td>
+    <td><span class="badge badge-blue">${ERP.roles.find(r=>r.value===u.role)?.label||u.role}</span></td>
+    <td>${u.branch_name||'Head Office'}</td>
+    <td><span class="badge ${u.is_active?'badge-green':'badge-red'}">${u.is_active?'Active':'Inactive'}</span></td>
+    <td>${u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
+    <td>
+      <button class="btn btn-sm btn-outline" onclick="editUser(${u.id})"><i class="ph ph-pencil"></i></button>
+      ${u.id !== 1 ? `<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})"><i class="ph ph-trash"></i></button>` : ''}
+    </td>
+  </tr>`).join('');
+}
+
+let editingUserId = null;
+async function saveUser() {
+  const name=document.getElementById('uName').value, email=document.getElementById('uEmail').value;
+  const pass=document.getElementById('uPass').value, role=document.getElementById('uRole').value;
+  const branch=document.getElementById('uBranch').value, status=document.getElementById('uStatus').value;
+  
+  if(!name || !email) return alert("Name and Email required");
+  
+  const payload = {name, email, role_id: ERP.roles.findIndex(r=>r.value===role)+1, branch_id: branch||null, is_active: status==='1'};
+  try {
+    if(editingUserId) {
+      await api.put('/users/'+editingUserId, payload);
+      if(pass) await api.put(`/users/${editingUserId}/password`, {password:pass});
+    } else {
+      if(!pass) return alert("Password required for new users");
+      payload.password = pass;
+      await api.post('/users', payload);
+    }
+    cancelUserEdit();
+    renderUsers(document.getElementById('mainContent'));
+  } catch(err) { alert(err.message); }
+}
+
+function editUser(id) {
+  const u = globalUsers.find(x=>x.id===id); if(!u) return;
+  document.getElementById('uName').value=u.name; document.getElementById('uEmail').value=u.email;
+  document.getElementById('uRole').value=u.role; document.getElementById('uBranch').value=u.branch_id||'';
+  document.getElementById('uStatus').value=u.is_active?'1':'0';
+  editingUserId = id; document.getElementById('cancelEditBtn').style.display='inline-flex';
+}
+function cancelUserEdit() {
+  editingUserId = null; document.getElementById('cancelEditBtn').style.display='none';
+  ['uName','uEmail','uPass','uBranch'].forEach(id=>document.getElementById(id).value='');
+}
+async function deleteUser(id) {
+  if(confirm('Deactivate this user?')) {
+    try { await api.del('/users/'+id); renderUsers(document.getElementById('mainContent')); } catch(e){ alert(e.message); }
+  }
+}
+
+// Inventory
+let globalInventory = [];
+async function renderInventory(el) {
+  const [invRes, bRes] = await Promise.all([api.get('/inventory'), api.get('/branches')]);
+  globalInventory = invRes.data;
+  globalBranches = bRes.data;
+  
+  const catOpts = ERP.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const branchOpts = globalBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  
+  el.innerHTML = `
+<div class="search-bar">
+  <input type="text" id="invSearch" placeholder="Search by SKU, Product Name..." oninput="filterInventory()">
+  <select id="invBranchFilter" onchange="filterInventory()"><option value="">All Branches</option>${branchOpts}</select>
+  <select id="invCatFilter" onchange="filterInventory()"><option value="">All Categories</option>${catOpts}</select>
+</div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Branch</th><th>SKU</th><th>Product Name</th><th>Category</th><th>Available Qty</th><th>Min Level</th><th>Value (₹)</th><th>Status</th></tr></thead>
+<tbody id="invTableBody">${renderInvRows(globalInventory)}</tbody></table></div></div>`;
+}
+
+function renderInvRows(data) {
+  return data.map(i => {
+    let statusMsg='Healthy', badge='badge-green';
+    if(i.available_qty <= 0) { statusMsg='Out of Stock'; badge='badge-red'; }
+    else if(i.available_qty <= i.min_stock_level) { statusMsg='Low Stock'; badge='badge-yellow'; }
+    
+    return `<tr>
+      <td>${i.branch_name}</td>
+      <td><strong>${i.sku}</strong></td>
+      <td>${i.product_name}</td>
+      <td>${i.category_name||'-'}</td>
+      <td>${i.available_qty}</td>
+      <td>${i.min_stock_level}</td>
+      <td>${Number(i.available_qty * i.base_price).toLocaleString('en-IN')}</td>
+      <td><span class="badge ${badge}">${statusMsg}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterInventory() {
+  const s = document.getElementById('invSearch').value.toLowerCase();
+  const c = document.getElementById('invCatFilter').value;
+  const b = document.getElementById('invBranchFilter').value;
+  
+  const filtered = globalInventory.filter(i => {
+    const matchS = !s || i.product_name.toLowerCase().includes(s) || i.sku.toLowerCase().includes(s);
+    const matchC = !c || i.category_name === c;
+    const matchB = !b || i.branch_id == b;
+    return matchS && matchC && matchB;
+  });
+  document.getElementById('invTableBody').innerHTML = renderInvRows(filtered);
+}
+
+// Reports
+async function renderReports(el) {
+  el.innerHTML = `
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchReportTab('fin',this)">Financial (P&L)</button>
+  <button class="tab-btn" onclick="switchReportTab('gst',this)">GST Summary</button>
+  <button class="tab-btn" onclick="switchReportTab('order',this)">Order Summary</button>
+</div>
+<div id="reportFin" class="tab-content active"><p>Loading P&L...</p></div>
+<div id="reportGst" class="tab-content"></div>
+<div id="reportOrder" class="tab-content"></div>`;
+  switchReportTab('fin', document.querySelector('.tab-btn'));
+}
+
+async function switchReportTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>{c.classList.remove('active'); c.innerHTML='';});
+  btn.classList.add('active');
+  const target = document.getElementById('report' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  target.classList.add('active');
+  destroyCharts();
+  
+  try {
+    if(tab === 'fin') {
+      const res = await api.get('/reports/profit-loss');
+      const d = res.data;
+      target.innerHTML = `
+        <div class="grid grid-3 mb-20">
+          <div class="card"><h3>Total Income</h3><div class="value" style="color:var(--success)">${ERP.currency}${d.income.toLocaleString()}</div></div>
+          <div class="card"><h3>Total Expenses</h3><div class="value" style="color:var(--danger)">${ERP.currency}${d.total_expenses.toLocaleString()}</div></div>
+          <div class="card"><h3>Net Profit (Period)</h3><div class="value" style="color:var(--primary)">${ERP.currency}${d.net_profit.toLocaleString()}</div></div>
+        </div>
+        <div class="card"><h3>Expense Breakdown</h3><div class="table-wrap mt-20"><table><thead><tr><th>Category</th><th>Amount</th></tr></thead><tbody>
+          ${d.expenses.map(e=>`<tr><td>${e.category}</td><td>${ERP.currency}${parseFloat(e.total).toLocaleString()}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
+    } else if(tab === 'gst') {
+      const res = await api.get('/reports/gst');
+      target.innerHTML = `<div class="card"><h3>Monthly GST Collection</h3><div class="table-wrap mt-20"><table><thead><tr><th>Month</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total Tax</th></tr></thead><tbody>
+        ${res.data.map(g=>`<tr><td>${g.month}</td><td>${ERP.currency}${g.cgst||0}</td><td>${ERP.currency}${g.sgst||0}</td><td>${ERP.currency}${g.igst||0}</td><td><strong>${ERP.currency}${g.total_tax||0}</strong></td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    } else if(tab === 'order') {
+      const res = await api.get('/reports/order-summary');
+      target.innerHTML = `<div class="card"><h3>Orders By Status</h3><div class="table-wrap mt-20"><table><thead><tr><th>Status</th><th>Count</th><th>Total Value</th></tr></thead><tbody>
+        ${res.data.map(o=>`<tr><td><span class="badge badge-gray">${o.status}</span></td><td>${o.count}</td><td>${ERP.currency}${Number(o.total).toLocaleString()}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    }
+  } catch(e) { target.innerHTML = `<div class="alert-item error">Failed to load report: ${e.message}</div>`; }
+}
+
+function renderSettings(el) {
+  el.innerHTML = `
+<div class="grid grid-2">
+  <div class="card"><h3><i class="ph ph-gear"></i> System Preferences</h3>
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">Settings like company name, global tax rates, and API keys are to be managed directly via environment variables or DB configurations.</p>
+    <div class="form-group"><label>App Theme</label><select disabled><option>Light</option><option>Dark</option></select></div>
+    <div class="form-group"><label>Notification Emails</label><input type="email" value="admin@shivamenterprise.com" disabled></div>
+  </div>
+</div>`;
+}
+</script>
+</body>
+</html>

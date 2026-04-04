@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shivam Enterprises — Accountant Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;--sidebar-bg:#0f172a;--sidebar-text:#94a3b8;--sidebar-hover:#1e293b;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;--surface:#fff;--bg:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1);--shadow-lg:0 10px 25px rgba(0,0,0,.1)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SPLASH & LOGIN */
+#splash,#login{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center}
+#splash{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#6366f1 100%);flex-direction:column;transition:opacity .6s;display:flex}
+#splash h1{color:#fff;font-size:28px;font-weight:700} #splash p{color:#94a3b8;font-size:14px;margin-top:8px}
+.loader{margin-top:32px;width:48px;height:48px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login{background:linear-gradient(135deg,#0f172a,#1e293b);z-index:9998}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.login-card .brand{text-align:center;margin-bottom:32px} .login-card .brand h2{font-size:22px;font-weight:700}
+.form-group{margin-bottom:16px} .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.login-error{color:var(--danger);font-size:13px;display:none;margin-bottom:10px}
+
+#app{display:none;width:100%;height:100%}
+.sidebar{width:250px;background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s}.sidebar.collapsed{width:70px}.sidebar.collapsed .brand span,.sidebar.collapsed nav a span{display:none}
+.sidebar .brand{padding:20px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e293b}.sidebar .brand i{font-size:28px;color:var(--primary-light)}.sidebar .brand span{color:#fff;font-size:16px;font-weight:700;white-space:nowrap}
+.sidebar nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;color:var(--sidebar-text);text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;margin-bottom:4px;transition:all .2s;cursor:pointer}.sidebar nav a:hover,.sidebar nav a.active{background:var(--sidebar-hover);color:#fff}.sidebar nav a.active{background:var(--primary)}.sidebar nav a i{font-size:20px;flex-shrink:0}
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar .left{display:flex;align-items:center;gap:16px}.topbar .hamburger{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary)}.topbar .left h3{font-size:16px;font-weight:600}
+.topbar .right{display:flex;align-items:center;gap:16px}.topbar .notif{position:relative;cursor:pointer;font-size:22px;color:var(--text-secondary)}.topbar .notif .nbadge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700}
+.topbar .user-info{display:flex;align-items:center;gap:8px}
+.topbar .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.main{flex:1;padding:24px;overflow-y:auto}.view{display:none}.view.active{display:block}
+.grid{display:grid;gap:20px}.grid-4{grid-template-columns:repeat(4,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}.card h3{font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px}
+.card .value{font-size:28px;font-weight:800}.card .change{font-size:12px;font-weight:600;margin-top:4px}.card .change.up{color:var(--success)}.card .change.down{color:var(--danger)}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#f8fafc;padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap}td{padding:12px 16px;border-bottom:1px solid #f1f5f9}tr:hover{background:#f8fafc}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}.badge-green{background:#d1fae5;color:#065f46}.badge-red{background:#fee2e2;color:#991b1b}.badge-yellow{background:#fef3c7;color:#92400e}.badge-blue{background:#dbeafe;color:#1e40af}.badge-gray{background:#f1f5f9;color:#475569}.badge-purple{background:#ede9fe;color:#5b21b6}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}.btn-sm{padding:7px 14px;font-size:13px}.btn-success{background:var(--success);color:#fff}.btn-danger{background:var(--danger);color:#fff}.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.chart-box{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid var(--border)}.chart-box h3{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-secondary)}
+.search-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}.search-bar input,.search-bar select{padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}.search-bar input{flex:1;min-width:200px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.section-header h2{font-size:18px;font-weight:700}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)}.tab-btn{padding:10px 20px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}.tab-content{display:none}.tab-content.active{display:block}
+.split-view{display:grid;grid-template-columns:1fr 1fr;gap:20px}.split-left,.split-right{background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}.split-left{max-height:calc(100vh - 180px);overflow-y:auto}.split-right{padding:24px}
+.inv-list-item{padding:14px 20px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .2s}.inv-list-item:hover,.inv-list-item.selected{background:#eef2ff}.inv-list-item .inv-title{font-weight:600;font-size:14px}.inv-list-item .inv-sub{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.alert-card{padding:14px 20px;border-radius:10px;margin-bottom:10px;border-left:4px solid;font-size:13px}.alert-card.critical{background:#fef2f2;border-color:var(--danger)}.alert-card.high{background:#fff7ed;border-color:#f97316}.alert-card.medium{background:#fefce8;border-color:var(--warning)}.alert-card.low{background:#f0fdf4;border-color:var(--success)}
+.report-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;cursor:pointer;transition:all .2s;text-align:center}.report-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:var(--shadow-lg)}.report-card i{font-size:32px;color:var(--primary);margin-bottom:12px}.report-card h3{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text)}.report-card p{font-size:12px;color:var(--text-secondary)}
+.mb-20{margin-bottom:20px}.mt-20{margin-top:20px}
+</style>
+</head>
+<body>
+
+<div id="splash">
+<h1>Shivam Enterprises</h1>
+<div class="loader"></div>
+</div>
+
+<div id="login">
+<div class="login-card">
+<div class="brand"><h2>Finance & Accounting</h2></div>
+<div class="form-group"><label>Email</label><input type="email" id="loginUser" value="acc.pune@shivamenterprise.com"></div>
+<div class="form-group"><label>Password</label><input type="password" id="loginPass" value="Password@123"></div>
+<div class="login-error" id="loginError">Invalid credentials</div>
+<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()"><i class="ph ph-sign-in"></i> Sign In</button>
+</div>
+</div>
+
+<div id="app">
+<div class="sidebar" id="sidebar">
+<div class="brand"><i class="ph ph-lightning"></i><span>Shivam ERP</span></div>
+<nav>
+<a class="active" onclick="navigate('dashboard',this)"><i class="ph ph-squares-four"></i><span>Dashboard</span></a>
+<a onclick="navigate('invoices',this)"><i class="ph ph-invoice"></i><span>Invoices & Bills</span></a>
+<a onclick="navigate('expenses',this)"><i class="ph ph-receipt"></i><span>Expenses</span></a>
+<a onclick="navigate('payments',this)"><i class="ph ph-money"></i><span>Payments</span></a>
+<a onclick="navigate('ledger',this)"><i class="ph ph-book-open"></i><span>Accounts/Ledger</span></a>
+<a onclick="navigate('reports',this)"><i class="ph ph-chart-bar"></i><span>Reports</span></a>
+<a onclick="api.logout()" style="margin-top:20px;color:var(--danger)"><i class="ph ph-sign-out"></i><span>Logout</span></a>
+</nav>
+</div>
+<div class="content-area">
+<div class="topbar">
+<div class="left"><button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('collapsed')"><i class="ph ph-list"></i></button><h3 id="pageTitle" style="margin-left:12px">Dashboard</h3></div>
+<div class="right">
+<div class="notif"><i class="ph ph-bell"></i><div class="nbadge" id="unreadCount">0</div></div>
+<div class="user-info">
+  <div class="avatar" id="topAvatar">AC</div>
+  <div><div id="topName" style="font-size:14px;font-weight:600">Accountant</div><div style="font-size:11px;color:var(--text-secondary)">Financial Desk</div></div>
+</div>
+</div>
+</div>
+<div class="main" id="mainContent"></div>
+</div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const ERP = { currency: '₹' };
+let charts = {};
+
+setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(checkAuth, 600); }, 1000);
+
+async function checkAuth() {
+  document.getElementById('splash').style.display = 'none';
+  if(api.getToken()) {
+    try {
+      const res = await api.get('/auth/me');
+      document.getElementById('topName').innerText = res.user.name;
+      document.getElementById('topAvatar').innerText = res.user.name.substring(0,2).toUpperCase();
+      document.getElementById('app').style.display = 'flex';
+      navigate('dashboard', document.querySelector('.sidebar nav a'));
+      fetchUnread();
+    } catch(e) { document.getElementById('login').style.display = 'flex'; }
+  } else { document.getElementById('login').style.display = 'flex'; }
+}
+
+async function doLogin() {
+  const e=document.getElementById('loginUser').value, p=document.getElementById('loginPass').value;
+  try {
+    const res = await api.post('/auth/login', {email: e, password: p});
+    localStorage.setItem('erp_token', res.token); localStorage.setItem('erp_user', JSON.stringify(res.user));
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('topName').innerText = res.user.name;
+    document.getElementById('topAvatar').innerText = res.user.name.substring(0,2).toUpperCase();
+    document.getElementById('app').style.display = 'flex';
+    navigate('dashboard', document.querySelector('.sidebar nav a'));
+    fetchUnread();
+  } catch(err) {
+    const el = document.getElementById('loginError'); el.innerText = err.message; el.style.display = 'block';
+  }
+}
+
+async function fetchUnread() {
+  try {
+    const res = await api.get('/notifications/count');
+    const badge = document.getElementById('unreadCount');
+    if(res.data.unread > 0) { badge.style.display = 'flex'; badge.innerText = res.data.unread; }
+  } catch(e) {}
+}
+
+const titles={dashboard:'Accountant Dashboard',invoices:'Invoices & Bills',expenses:'Expenses',payments:'Payments',ledger:'Accounts / Ledger',reports:'Financial Reports'};
+
+async function navigate(view, el) {
+  if(el) { document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active')); el.classList.add('active'); }
+  document.getElementById('pageTitle').textContent = titles[view]||view;
+  Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()}); charts={};
+  const m = document.getElementById('mainContent');
+  m.innerHTML = '<div class="loader" style="margin:40px auto"></div>';
+  try {
+    if(view==='dashboard') await renderDashboard(m);
+    else if(view==='invoices') await renderInvoices(m);
+    else if(view==='expenses') await renderExpenses(m);
+    else if(view==='payments') await renderPayments(m);
+    else if(view==='ledger') await renderLedger(m);
+    else if(view==='reports') renderReports(m);
+  } catch(err) { m.innerHTML = `<div class="alert-card critical">${err.message}</div>`; }
+}
+
+function statusBadge(s){const m={draft:'badge-gray',sent:'badge-blue',partial:'badge-yellow',paid:'badge-green',overdue:'badge-red',unpaid:'badge-red',pending:'badge-yellow',approved:'badge-green',rejected:'badge-red',completed:'badge-green',failed:'badge-red'};return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`}
+
+async function renderDashboard(el) {
+  const dRes = await api.get('/dashboard/accountant');
+  const d = dRes.data;
+  const nRes = await api.get('/notifications');
+  const invRes = await api.get('/invoices');
+  
+  el.innerHTML=`
+<div class="grid grid-4 mb-20">
+  <div class="card"><div class="kpi-icon" style="background:#d1fae5;color:var(--success)"><i class="ph ph-trend-up"></i></div><h3>Total Revenue (MTD)</h3><div class="value">${ERP.currency}${Number(d.revenue||0).toLocaleString('en-IN')}</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fee2e2;color:var(--danger)"><i class="ph ph-trend-down"></i></div><h3>Total Expenses (MTD)</h3><div class="value">${ERP.currency}${Number(d.expenses||0).toLocaleString('en-IN')}</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#dbeafe;color:var(--info)"><i class="ph ph-arrow-circle-down"></i></div><h3>Accounts Receivable</h3><div class="value">${ERP.currency}${Number(d.receivable||0).toLocaleString('en-IN')}</div><div class="change">${d.overdue_count} overdue</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fef3c7;color:var(--warning)"><i class="ph ph-arrow-circle-up"></i></div><h3>Accounts Payable</h3><div class="value">${ERP.currency}${Number(d.payable||0).toLocaleString('en-IN')}</div></div>
+</div>
+
+<div class="grid grid-2 mb-20" style="grid-template-columns: 2fr 1fr">
+  <div class="card">
+    <h3><i class="ph ph-chart-bar"></i> Income vs Expenses (Last 6 Months)</h3>
+    <div style="height:320px;margin-top:20px"><canvas id="revenueChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h3><i class="ph ph-bell-ringing"></i> Financial Alerts</h3>
+    <div style="margin-top:20px">${nRes.data.map(a=>`<div class="alert-card ${a.type==='payment'?'medium':'info'}"><strong>${a.title}</strong><div style="margin-top:4px;opacity:0.8">${a.message}</div></div>`).join('') || '<p>No alerts.</p>'}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3><i class="ph ph-warning-circle"></i> Outstanding Invoices</h3>
+  <div class="table-wrap mt-20"><table><thead><tr><th>Invoice No.</th><th>Status</th><th>Outstanding</th></tr></thead><tbody>
+  ${invRes.data.filter(i=>i.balance_amount>0).slice(0,5).map(i=>`<tr><td>${i.invoice_no}</td><td>${statusBadge(i.payment_status)}</td><td>${ERP.currency}${Number(i.balance_amount).toLocaleString()}</td></tr>`).join('')}
+  </tbody></table></div>
+</div>`;
+
+  if (d.chart) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    charts.revenue = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: d.chart.labels,
+        datasets: [
+          { label: 'Income', data: d.chart.income, backgroundColor: '#10b981', borderRadius: 6 },
+          { label: 'Expenses', data: d.chart.expenses, backgroundColor: '#ef4444', borderRadius: 6 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end' } },
+        scales: {
+          y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+let globalInvoices = [];
+async function renderInvoices(el) {
+  const pRes = await api.get('/purchase-bills');
+  const res = await api.get('/invoices');
+  
+  // Combine invoices and purchase bills
+  globalInvoices = [
+    ...res.data.map(i=>({...i, displayId: i.invoice_no, displayParty: i.customer_name, outstanding: i.balance_amount, dispType: 'Invoice'})),
+    ...pRes.data.map(i=>({...i, displayId: i.bill_no, displayParty: i.vendor_name, outstanding: i.total_amount-i.paid_amount, payment_status: i.payment_status, dispType: 'Bill'}))
+  ];
+  
+  el.innerHTML=`
+<div class="section-header"><h2>Invoices & Bills</h2></div>
+<div class="split-view">
+<div class="split-left">
+<div style="padding:12px 20px;border-bottom:1px solid var(--border)"><div class="tabs" style="margin:0;border:0">${['All','Invoices','Bills'].map((t,i)=>`<button class="tab-btn ${i===0?'active':''}" onclick="filterInvTab('${t}',this)">${t}</button>`).join('')}</div></div>
+<div id="invListContainer">${renderInvList(globalInvoices)}</div>
+</div>
+<div class="split-right" id="invPreview">${renderInvPreview(globalInvoices[0])}</div>
+</div>`;
+}
+
+function renderInvList(data){
+  if(data.length===0) return '<p style="padding:20px;text-align:center">No records.</p>';
+  return data.map((inv,i)=>`<div class="inv-list-item ${i===0?'selected':''}" onclick="selectInv(${i},this)"><div style="display:flex;justify-content:space-between;align-items:center"><div><span class="inv-title">${inv.displayId}</span> <span class="badge ${inv.dispType==='Invoice'?'badge-blue':'badge-gray'}" style="font-size:10px">${inv.dispType}</span></div>${statusBadge(inv.payment_status)}</div><div class="inv-sub">${inv.displayParty} · ${ERP.currency}${Number(inv.total_amount).toLocaleString()} · Bal: ${ERP.currency}${Number(inv.outstanding).toLocaleString()}</div></div>`).join('');
+}
+function selectInv(idx,el){
+  document.querySelectorAll('.inv-list-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected'); document.getElementById('invPreview').innerHTML=renderInvPreview(globalInvoices[idx]);
+}
+function renderInvPreview(inv){
+  if(!inv) return '<p>No details</p>';
+  return `<h3 style="font-size:16px;margin-bottom:20px">${inv.displayId}</h3><div style="font-size:14px;line-height:2.2"><div><strong>Type:</strong> ${inv.dispType}</div><div><strong>Party:</strong> ${inv.displayParty}</div><div><strong>Total Amount:</strong> ${ERP.currency}${Number(inv.total_amount).toLocaleString()}</div><div><strong>Balance Due:</strong> ${ERP.currency}${Number(inv.outstanding).toLocaleString()}</div><div><strong>Status:</strong> ${statusBadge(inv.payment_status)}</div><div><strong>Date:</strong> ${new Date(inv.created_at).toLocaleDateString()}</div></div><div style="margin-top:20px"><button class="btn btn-sm btn-outline"><i class="ph ph-download"></i> Download PDF</button></div>`;
+}
+function filterInvTab(tab,btn){
+  document.querySelectorAll('.split-left .tabs .tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  const d = tab==='All'? globalInvoices : globalInvoices.filter(i=>i.dispType===(tab==='Invoices'?'Invoice':'Bill'));
+  document.getElementById('invListContainer').innerHTML = renderInvList(d);
+}
+
+async function renderExpenses(el) {
+  const [expRes, billRes] = await Promise.all([api.get('/expenses'), api.get('/purchase-bills')]);
+  
+  const allExp = [
+    ...expRes.data.map(e => ({ ...e, type: 'Direct Expense', title: e.category, party: e.vendor_name, date: e.expense_date })),
+    ...billRes.data.map(b => ({ ...b, type: 'Purchase Bill', title: 'Inventory Stock-in', party: b.vendor_name, date: b.bill_date, amount: b.total_amount }))
+  ].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  el.innerHTML=`
+<div class="section-header"><h2>All Expenditure</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Type</th><th>Reference</th><th>Description</th><th>Party</th><th>Amount</th><th>Date</th></tr></thead><tbody>
+  ${allExp.map(e=>`<tr>
+    <td><span class="badge ${e.type==='Purchase Bill'?'badge-blue':'badge-gray'}">${e.type}</span></td>
+    <td><strong>${e.reference_no || e.bill_no || ('EXP-'+e.id)}</strong></td>
+    <td>${e.title}</td>
+    <td>${e.party || 'N/A'}</td>
+    <td><strong style="color:var(--danger)">${ERP.currency}${Number(e.amount||0).toLocaleString()}</strong></td>
+    <td>${new Date(e.date).toLocaleDateString()}</td>
+  </tr>`).join('')}
+  ${allExp.length===0?'<tr><td colspan="6" style="text-align:center">No expenditure tracked</td></tr>':''}
+</tbody></table></div></div>`;
+}
+
+async function renderPayments(el) {
+  const res = await api.get('/payments');
+  el.innerHTML=`
+<div class="section-header"><h2>Payments</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Receipt#</th><th>Type</th><th>Linked To</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead><tbody>
+  ${res.data.map(p=>`<tr><td><strong>${p.receipt_no||p.id}</strong></td><td><span class="badge ${p.payment_type==='incoming'?'badge-green':'badge-red'}">${p.payment_type}</span></td><td>${p.invoice_no||p.bill_no||'Advance'}</td><td><strong>${p.payment_type==='incoming'?'+':'-'}${ERP.currency}${p.amount}</strong></td><td>${p.payment_mode}</td><td>${new Date(p.payment_date).toLocaleDateString()}</td></tr>`).join('')}
+</tbody></table></div></div>`;
+}
+
+async function renderLedger(el) {
+  const res = await api.get('/ledger?limit=50');
+  el.innerHTML=`
+<div class="section-header"><h2>Double-Entry Ledger</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Account</th><th>Entity</th><th>Debit (₹)</th><th>Credit (₹)</th><th>Branch</th></tr></thead><tbody>
+  ${res.data.map(l=>`<tr><td>${new Date(l.transaction_date).toLocaleDateString()}</td><td><strong>${l.account_name}</strong></td><td>${l.entity_type||'-'}</td><td style="color:var(--danger)">${l.debit>0?l.debit:''}</td><td style="color:var(--success)">${l.credit>0?l.credit:''}</td><td>${l.branch_name||'Head Office'}</td></tr>`).join('')}
+</tbody></table></div></div>`;
+}
+
+function renderReports(el) {
+  el.innerHTML=`
+<div class="section-header"><h2>Financial Reports</h2></div>
+<div class="grid grid-3 mb-20">
+  <div class="report-card" onclick="showReport('pnl')"><i class="ph ph-chart-line"></i><h3>Profit & Loss</h3><p>Income vs Expense breakdown</p></div>
+  <div class="report-card" onclick="showReport('gst')"><i class="ph ph-receipt"></i><h3>GST Summary</h3><p>Tax collection report</p></div>
+</div>
+<div id="reportContent"></div>`;
+  showReport('pnl');
+}
+
+async function showReport(type) {
+  const c = document.getElementById('reportContent');
+  c.innerHTML = '<div class="loader" style="margin:20px auto"></div>';
+  try {
+    if(type==='pnl') {
+      const res = await api.get('/reports/profit-loss');
+      const d = res.data;
+      c.innerHTML = `
+<div class="card mb-20"><div class="section-header"><h3>Profit & Loss Statement</h3></div>
+<div class="table-wrap mt-20"><table><thead><tr><th>Particulars</th><th>Amount (₹)</th></tr></thead><tbody>
+<tr style="background:#f0fdf4"><td><strong>Income</strong></td><td><strong>${ERP.currency}${Number(d.income||0).toLocaleString()}</strong></td></tr>
+<tr style="background:#fef2f2"><td><strong>Total Expenses</strong></td><td><strong>${ERP.currency}${Number(d.total_expenses||0).toLocaleString()}</strong></td></tr>
+${d.expenses.map(e=>`<tr><td>  - ${e.category}</td><td>${ERP.currency}${Number(e.total).toLocaleString()}</td></tr>`).join('')}
+<tr style="background:#eef2ff;font-size:15px;border-top:2px solid var(--border)"><td><strong>Net Profit</strong></td><td style="color:${d.net_profit<0?'var(--danger)':'var(--success)'}"><strong>${ERP.currency}${Number(d.net_profit||0).toLocaleString()}</strong></td></tr>
+</tbody></table></div></div>`;
+    } else if(type==='gst') {
+      const res = await api.get('/reports/gst');
+      c.innerHTML = `
+<div class="card mb-20"><div class="section-header"><h3>Monthly GST Report</h3></div>
+<div class="table-wrap mt-20"><table><thead><tr><th>Month</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total Tax</th></tr></thead><tbody>
+${res.data.map(g=>`<tr><td>${g.month}</td><td>${ERP.currency}${g.cgst||0}</td><td>${ERP.currency}${g.sgst||0}</td><td>${ERP.currency}${g.igst||0}</td><td><strong>${ERP.currency}${g.total_tax||0}</strong></td></tr>`).join('')}
+</tbody></table></div></div>`;
+    }
+  } catch(e) { c.innerHTML = `<div class="alert-card critical">Report generation failed: ${e.message}</div>`; }
+}
+</script>
+</body>
+</html>

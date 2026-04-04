@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shivam Enterprises — Branch Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;--sidebar-bg:#0f172a;--sidebar-text:#94a3b8;--sidebar-hover:#1e293b;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;--surface:#fff;--bg:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1);--shadow-lg:0 10px 25px rgba(0,0,0,.1)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SPLASH & LOGIN */
+#splash,#login{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center}
+#splash{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#6366f1 100%);flex-direction:column;transition:opacity .6s;display:flex}
+#splash h1{color:#fff;font-size:28px;font-weight:700} #splash p{color:#94a3b8;font-size:14px;margin-top:8px}
+.loader{margin-top:32px;width:48px;height:48px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login{background:linear-gradient(135deg,#0f172a,#1e293b);z-index:9998}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.login-card .brand{text-align:center;margin-bottom:32px} .login-card .brand h2{font-size:22px;font-weight:700}
+.form-group{margin-bottom:16px} .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.login-error{color:var(--danger);font-size:13px;display:none;margin-bottom:10px}
+
+#app{display:none;width:100%;height:100%}
+.sidebar{width:250px;background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar .brand{padding:20px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e293b}
+.sidebar .brand i{font-size:28px;color:var(--primary-light)}
+.sidebar .brand span{color:#fff;font-size:16px;font-weight:700}
+.sidebar nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;color:var(--sidebar-text);text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;margin-bottom:4px;transition:all .2s;cursor:pointer}
+.sidebar nav a:hover,.sidebar nav a.active{background:var(--sidebar-hover);color:#fff}
+.sidebar nav a.active{background:var(--primary)}
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar .branch-badge{background:#eef2ff;color:var(--primary);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-left:12px}
+.main{flex:1;padding:24px;overflow-y:auto}
+.grid{display:grid;gap:20px}.grid-4{grid-template-columns:repeat(4,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}.card h3{font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px}
+.card .value{font-size:28px;font-weight:800}.card .change{font-size:12px;font-weight:600;margin-top:4px}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}th{background:#f8fafc;padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap}td{padding:12px 16px;border-bottom:1px solid #f1f5f9}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}.badge-green{background:#d1fae5;color:#065f46}.badge-red{background:#fee2e2;color:#991b1b}.badge-yellow{background:#fef3c7;color:#92400e}.badge-blue{background:#dbeafe;color:#1e40af}.badge-gray{background:#f1f5f9;color:#475569}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}.btn-primary{background:var(--primary);color:#fff}.btn-success{background:var(--success);color:#fff}.btn-danger{background:var(--danger);color:#fff}.btn-outline{background:transparent;border:1.5px solid var(--border)}
+.chart-box{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid var(--border)}.chart-box h3{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-secondary)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:32px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto} .modal h2{font-size:18px;display:flex;justify-content:space-between;margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mb-20{margin-bottom:20px}.mt-20{margin-top:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<div id="splash">
+<h1>Shivam Enterprises</h1>
+<div class="loader"></div>
+</div>
+
+<div id="login">
+<div class="login-card">
+<div class="brand"><h2>Branch Manager Panel</h2></div>
+<div class="form-group"><label>Email</label><input type="email" id="loginUser" value="bm.pune@shivamenterprise.com"></div>
+<div class="form-group"><label>Password</label><input type="password" id="loginPass" value="Password@123"></div>
+<div class="login-error" id="loginError">Invalid credentials</div>
+<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()"><i class="ph ph-sign-in"></i> Sign In</button>
+</div>
+</div>
+
+<div id="app">
+<div class="sidebar">
+<div class="brand"><i class="ph ph-lightning"></i><span>Shivam ERP</span></div>
+<nav>
+<a class="active" onclick="navigate('dashboard',this)"><i class="ph ph-squares-four"></i><span>Dashboard</span></a>
+<a onclick="navigate('orders',this)"><i class="ph ph-shopping-cart"></i><span>Orders (Approvals)</span></a>
+<a onclick="navigate('inventory',this)"><i class="ph ph-package"></i><span>Inventory</span></a>
+<a onclick="navigate('transfers',this)"><i class="ph ph-arrows-left-right"></i><span>Transfers</span></a>
+<a onclick="navigate('customers',this)"><i class="ph ph-users"></i><span>Customers</span></a>
+<a onclick="api.logout()" style="margin-top:20px;color:var(--danger)"><i class="ph ph-sign-out"></i><span>Logout</span></a>
+</nav>
+</div>
+<div class="content-area">
+<div class="topbar">
+<div class="left"><h3 id="pageTitle">Dashboard</h3><span class="branch-badge" id="topBranch"><i class="ph ph-map-pin"></i> Branch Name</span></div>
+<div class="right" style="display:flex;align-items:center;gap:10px">
+  <div class="avatar" id="topAvatar" style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold">BM</div>
+  <div><div class="user-name" id="topName" style="font-size:14px;font-weight:600">BM User</div><div class="user-role" style="font-size:11px;color:var(--text-secondary)">Branch Manager</div></div>
+</div>
+</div>
+<div class="main" id="mainContent"></div>
+</div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const ERP = { currency: '₹' };
+let charts = {};
+
+setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(checkAuth, 600); }, 1000);
+
+async function checkAuth() {
+  document.getElementById('splash').style.display = 'none';
+  if(api.getToken()) {
+    try {
+      const res = await api.get('/auth/me');
+      setupUserUI(res.user);
+      document.getElementById('app').style.display = 'flex';
+      navigate('dashboard', document.querySelector('.sidebar nav a'));
+    } catch(e) { document.getElementById('login').style.display = 'flex'; }
+  } else { document.getElementById('login').style.display = 'flex'; }
+}
+
+async function doLogin() {
+  const e=document.getElementById('loginUser').value, p=document.getElementById('loginPass').value;
+  try {
+    const res = await api.post('/auth/login', {email: e, password: p});
+    localStorage.setItem('erp_token', res.token); localStorage.setItem('erp_user', JSON.stringify(res.user));
+    document.getElementById('login').style.display = 'none';
+    setupUserUI(res.user);
+    document.getElementById('app').style.display = 'flex';
+    navigate('dashboard', document.querySelector('.sidebar nav a'));
+  } catch(err) {
+    const el = document.getElementById('loginError'); el.innerText = err.message; el.style.display = 'block';
+  }
+}
+
+function setupUserUI(user) {
+  document.getElementById('topName').innerText = user.name;
+  document.getElementById('topAvatar').innerText = user.name.substring(0,2).toUpperCase();
+  document.getElementById('topBranch').innerHTML = `<i class="ph ph-map-pin"></i> ${user.branch_name || 'Global'}`;
+}
+
+const titles = {dashboard:'Dashboard',orders:'Pending Order Approvals',inventory:'Branch Inventory',transfers:'Store Transfers',customers:'Customers'};
+
+async function navigate(view, el) {
+  if(el) { document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active')); el.classList.add('active'); }
+  document.getElementById('pageTitle').textContent = titles[view]||view;
+  const m = document.getElementById('mainContent');
+  m.innerHTML = '<div class="loader" style="margin:40px auto"></div>';
+  Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()}); charts={};
+  
+  try {
+    if(view==='dashboard') await renderDashboard(m);
+    else if(view==='orders') await renderOrders(m);
+    else if(view==='inventory') await renderInventory(m);
+    else if(view==='transfers') await renderTransfers(m);
+    else if(view==='customers') await renderCustomers(m);
+  } catch(err) { m.innerHTML = `<div class="alert-card critical" style="color:var(--danger)">${err.message}</div>`; }
+}
+
+function statusBadge(s) {
+  const m={draft:'badge-gray',pending_approval:'badge-yellow',approved:'badge-blue',rejected:'badge-red',dispatched:'badge-purple',delivered:'badge-green',pending:'badge-yellow',received:'badge-green'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${(s||'').replace(/_/g,' ')}</span>`;
+}
+
+// ==== DASHBOARD ====
+async function renderDashboard(el) {
+  const res = await api.get('/dashboard/branch-manager');
+  const d = res.data;
+  const ords = d.orders || {}; const trfs = d.transfers || {};
+  
+  el.innerHTML = `
+<div class="grid grid-4 mb-20">
+  <div class="card"><div class="kpi-icon" style="background:#eef2ff;color:var(--primary)"><i class="ph ph-currency-inr"></i></div><h3>Monthly Revenue</h3><div class="value">${ERP.currency}${Number(ords.revenue||0).toLocaleString('en-IN')}</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fef3c7;color:var(--warning)"><i class="ph ph-shopping-cart"></i></div><h3>Total Orders</h3><div class="value">${ords.total_orders||0}</div><div class="change">${ords.pending||0} pending approval</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#dbeafe;color:var(--info)"><i class="ph ph-arrows-left-right"></i></div><h3>Pending Transfers</h3><div class="value">${trfs.pending_transfers||0}</div><div class="change">Review required</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fee2e2;color:var(--danger)"><i class="ph ph-warning"></i></div><h3>Low Stock</h3><div class="value">${d.low_stock.length||0}</div><div class="change">Items need restock</div></div>
+</div>
+<div class="card"><h3>Recent Orders</h3>
+<div class="table-wrap mt-20"><table><thead><tr><th>Order#</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>
+  ${(d.recent_orders||[]).map(o=>`<tr><td><strong>${o.order_no}</strong></td><td>${o.customer_name}</td><td>${ERP.currency}${Number(o.total_amount).toLocaleString('en-IN')}</td><td>${statusBadge(o.status)}</td><td>${new Date(o.order_date).toLocaleDateString()}</td></tr>`).join('')}
+  ${d.recent_orders?.length===0 ? '<tr><td colspan="5" style="text-align:center">No orders found</td></tr>' : ''}
+</tbody></table></div></div>`;
+}
+
+// ==== ORDERS (APPROVALS) ====
+async function renderOrders(el) {
+  const res = await api.get('/orders');
+  // Sort pending_approval first
+  const orders = res.data.sort((a,b) => {
+    if(a.status === 'pending_approval' && b.status !== 'pending_approval') return -1;
+    if(b.status === 'pending_approval' && a.status !== 'pending_approval') return 1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+  
+  el.innerHTML = `<div class="card"><div class="section-header"><h3>Order Approvals</h3></div>
+<div class="table-wrap mt-20"><table><thead><tr><th>Order#</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+${orders.map(o=>`<tr>
+  <td><strong>${o.order_no}</strong></td>
+  <td>${o.customer_name}</td>
+  <td>${ERP.currency}${Number(o.total_amount).toLocaleString('en-IN')}</td>
+  <td>${statusBadge(o.status)}</td>
+  <td>${new Date(o.created_at).toLocaleDateString()}</td>
+  <td>
+    ${o.status==='pending_approval' ? 
+      `<button class="btn btn-sm btn-success" onclick="approveOrder(${o.id}, 'approve')"><i class="ph ph-check"></i> Approve</button> 
+       <button class="btn btn-sm btn-danger" onclick="approveOrder(${o.id}, 'reject')"><i class="ph ph-x"></i> Reject</button>` : 
+      `<span style="color:var(--text-secondary);font-size:12px">Resolved</span>`}
+  </td>
+</tr>`).join('')}
+</tbody></table></div></div>`;
+}
+
+async function approveOrder(orderId, action) {
+  if(confirm(`Are you sure you want to ${action} this order?`)) {
+    try {
+      await api.patch(`/orders/${orderId}/approve`, { action, rejection_reason: action==='reject'?'Manager rejected':'' });
+      renderOrders(document.getElementById('mainContent')); // Re-render
+    } catch(err) { alert("Failed: " + err.message); }
+  }
+}
+
+// ==== INVENTORY ====
+async function renderInventory(el) {
+  const res = await api.get('/inventory');
+  const d = res.data;
+  el.innerHTML = `
+<div class="section-header"><h2>Your Branch Inventory</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>SKU</th><th>Product Name</th><th>Available Qty</th><th>Min Level</th><th>Value</th><th>Status</th></tr></thead><tbody>
+  ${d.map(i=>{
+    const msg = i.available_qty<=0?'Out of Stock':i.available_qty<=i.min_stock_level?'Low Stock':'In Stock';
+    return `<tr><td><strong>${i.sku}</strong></td><td>${i.product_name}</td><td>${i.available_qty}</td><td>${i.min_stock_level}</td><td>${ERP.currency}${Number(i.available_qty*i.base_price).toLocaleString('en-IN')}</td><td>${statusBadge(msg)}</td></tr>`;
+  }).join('')}
+</tbody></table></div></div>`;
+}
+
+// ==== TRANSFERS ====
+let globalTransfers = [];
+async function renderTransfers(el) {
+  const res=await api.get('/transfers');
+  globalTransfers = res.data;
+  
+  const localRequests = res.data.filter(t => t.status === 'pending_local');
+  const remotePending = res.data.filter(t => t.status === 'pending_remote');
+  const otherHistory = res.data.filter(t => !['pending_local','pending_remote'].includes(t.status));
+
+  el.innerHTML=`
+<div class="section-header"><h2>Multi-Stage Transfer Pipeline</h2></div>
+<div class="card mb-20"><h3><i class="ph ph-arrow-down"></i> Local Action Required (Requests originating here or asking for items from here)</h3>
+<div class="table-wrap mt-20"><table><thead><tr><th>Ref#</th><th>From Branch</th><th>To Branch</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+  ${localRequests.map(t=>`<tr><td><strong>${t.transfer_no}</strong></td><td>${t.from_branch_name}</td><td>${t.to_branch_name}</td><td>${statusBadge(t.status)}</td><td>${new Date(t.request_date).toLocaleDateString()}</td><td><button class="btn btn-sm btn-success" onclick="approveTransfer(${t.id}, 'approve')"><i class="ph ph-check"></i> Authorize Stage 1</button> <button class="btn btn-sm btn-danger" onclick="approveTransfer(${t.id}, 'reject')"><i class="ph ph-x"></i></button></td></tr>`).join('')}
+  ${localRequests.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">No local stage requests pending.</td></tr>':''}
+</tbody></table></div></div>
+
+<div class="card mb-20"><h3><i class="ph ph-arrow-arc-right"></i> Remote Action Required (Awaiting Final Fulfillment / Stock Deduction)</h3>
+<div class="table-wrap mt-20"><table><thead><tr><th>Ref#</th><th>From Branch</th><th>To Branch</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+  ${remotePending.map(t=>`<tr><td><strong>${t.transfer_no}</strong></td><td>${t.from_branch_name}</td><td>${t.to_branch_name}</td><td>${statusBadge(t.status)}</td><td>${new Date(t.request_date).toLocaleDateString()}</td><td><button class="btn btn-sm btn-success" onclick="approveTransfer(${t.id}, 'approve')"><i class="ph ph-check"></i> Dispatch & Deduct Stock</button> <button class="btn btn-sm btn-danger" onclick="approveTransfer(${t.id}, 'reject')"><i class="ph ph-x"></i></button></td></tr>`).join('')}
+  ${remotePending.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">No remote stage fulfillments pending.</td></tr>':''}
+</tbody></table></div></div>
+
+<div class="card mb-20"><h3><i class="ph ph-clock-counter-clockwise"></i> Transfer History</h3>
+<div class="table-wrap mt-20"><table><thead><tr><th>Ref#</th><th>From Branch</th><th>To Branch</th><th>Status</th><th>Date</th></tr></thead><tbody>
+  ${otherHistory.map(t=>`<tr><td><strong>${t.transfer_no}</strong></td><td>${t.from_branch_name}</td><td>${t.to_branch_name}</td><td>${statusBadge(t.status)}</td><td>${new Date(t.request_date).toLocaleDateString()}</td></tr>`).join('')}
+  ${otherHistory.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--text-secondary)">No history available.</td></tr>':''}
+</tbody></table></div></div>`;
+}
+
+async function approveTransfer(id, action) {
+  if(!confirm(`Are you sure you want to ${action} this transfer?`)) return;
+  try {
+    await api.patch(`/transfers/${id}/approve`, { action });
+    renderTransfers(document.getElementById('mainContent'));
+  } catch(e) { alert(e.message); }
+}
+
+// ==== CUSTOMERS ====
+async function renderCustomers(el) {
+  const res=await api.get('/customers');
+  el.innerHTML=`<div class="section-header"><h2>Customers</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Phone</th><th>City</th><th>Added By</th></tr></thead><tbody>
+  ${res.data.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.contact_person}</td><td>${c.phone}</td><td>${c.city}</td><td>${c.created_by_name||'Sales Representative'}</td></tr>`).join('')}
+</tbody></table></div></div>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shivam Enterprises — Sales Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;--sidebar-bg:#0f172a;--sidebar-text:#94a3b8;--sidebar-hover:#1e293b;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;--surface:#fff;--bg:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1);--shadow-lg:0 10px 25px rgba(0,0,0,.1)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SPLASH & LOGIN */
+#splash,#login{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center}
+#splash{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#6366f1 100%);flex-direction:column;transition:opacity .6s;display:flex}
+#splash h1{color:#fff;font-size:28px;font-weight:700} #splash p{color:#94a3b8;font-size:14px;margin-top:8px}
+.loader{margin-top:32px;width:48px;height:48px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login{background:linear-gradient(135deg,#0f172a,#1e293b);z-index:9998}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.login-card .brand{text-align:center;margin-bottom:32px} .login-card .brand h2{font-size:22px;font-weight:700}
+.form-group{margin-bottom:16px} .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.login-error{color:var(--danger);font-size:13px;display:none;margin-bottom:10px}
+
+#app{display:none;width:100%;height:100%}
+.sidebar{width:250px;background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s}
+.sidebar.collapsed{width:70px}
+.sidebar .brand{padding:20px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e293b}
+.sidebar .brand i{font-size:28px;color:var(--primary-light)}
+.sidebar .brand span{color:#fff;font-size:16px;font-weight:700;white-space:nowrap}
+.sidebar nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;color:var(--sidebar-text);text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;margin-bottom:4px;transition:all .2s;cursor:pointer}
+.sidebar nav a:hover,.sidebar nav a.active{background:var(--sidebar-hover);color:#fff}
+.sidebar nav a.active{background:var(--primary)}
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar .notif .nbadge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700}
+.main{flex:1;padding:24px;overflow-y:auto}
+.view{display:none}.view.active{display:block}
+.grid{display:grid;gap:20px}.grid-4{grid-template-columns:repeat(4,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}.card h3{font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px}
+.card .value{font-size:28px;font-weight:800}.card .change{font-size:12px;font-weight:600;margin-top:4px}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}th{background:#f8fafc;padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap}td{padding:12px 16px;border-bottom:1px solid #f1f5f9}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}.badge-green{background:#d1fae5;color:#065f46}.badge-red{background:#fee2e2;color:#991b1b}.badge-yellow{background:#fef3c7;color:#92400e}.badge-blue{background:#dbeafe;color:#1e40af}.badge-gray{background:#f1f5f9;color:#475569}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}.btn-primary{background:var(--primary);color:#fff}.btn-outline{border:1.5px solid var(--border);background:transparent}.btn-danger{background:var(--danger);color:#fff}
+.search-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}.search-bar input{flex:1;min-width:200px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)}.tab-btn{padding:10px 20px;border:none;background:transparent;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-content{display:none}.tab-content.active{display:block}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:32px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto} .modal h2{font-size:18px;display:flex;justify-content:space-between;margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;display:none}.drawer-overlay.open{display:block}
+.drawer{position:fixed;top:0;right:-480px;width:460px;height:100vh;background:#fff;box-shadow:-5px 0 30px rgba(0,0,0,.15);z-index:950;transition:right .3s;overflow-y:auto;padding:32px}.drawer.open{right:0}
+.alert-card{padding:14px 20px;border-radius:10px;margin-bottom:10px;border-left:4px solid}.alert-card.critical{background:#fef2f2;border-color:var(--danger)}.alert-card.high{background:#fff7ed;border-color:#f97316}.alert-card.medium{background:#fefce8;border-color:var(--warning)}.alert-card.low{background:#f0fdf4;border-color:var(--success)}
+</style>
+</head>
+<body>
+
+<div id="splash">
+<h1>Shivam Enterprises</h1>
+<div class="loader"></div>
+</div>
+
+<div id="login">
+<div class="login-card">
+<div class="brand"><h2>Shivam Sales Panel</h2></div>
+<div class="form-group"><label>Email</label><input type="email" id="loginUser" value="sales.pune@shivamenterprise.com"></div>
+<div class="form-group"><label>Password</label><input type="password" id="loginPass" value="Password@123"></div>
+<div class="login-error" id="loginError">Invalid credentials</div>
+<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()"><i class="ph ph-sign-in"></i> Sign In</button>
+</div>
+</div>
+
+<div id="app">
+<div class="sidebar" id="sidebar">
+<div class="brand"><i class="ph ph-lightning"></i><span>Shivam ERP</span></div>
+<nav>
+<a class="active" onclick="navigate('dashboard',this)"><i class="ph ph-squares-four"></i><span>Dashboard</span></a>
+<a onclick="navigate('orders',this)"><i class="ph ph-shopping-cart"></i><span>Orders</span></a>
+<a onclick="navigate('customers',this)"><i class="ph ph-users"></i><span>Customers</span></a>
+<a onclick="navigate('inventory',this)"><i class="ph ph-package"></i><span>Inventory</span></a>
+<a onclick="navigate('transfers',this)"><i class="ph ph-arrows-left-right"></i><span>Transfers</span></a>
+<a onclick="navigate('dispatch',this)"><i class="ph ph-truck"></i><span>Dispatch</span></a>
+<a onclick="api.logout()" style="margin-top:20px;color:var(--danger)"><i class="ph ph-sign-out"></i><span>Logout</span></a>
+</nav>
+</div>
+<div class="content-area">
+<div class="topbar">
+<div class="left"><button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" style="background:none;border:none;font-size:22px;cursor:pointer"><i class="ph ph-list"></i></button><h3 id="pageTitle" style="margin-left:12px">Dashboard</h3></div>
+<div class="right" style="display:flex;align-items:center;gap:16px">
+<div class="notif" style="position:relative"><i class="ph ph-bell" style="font-size:22px"></i><div class="nbadge" id="unreadCount">0</div></div>
+<div class="avatar" id="topAvatar" style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold">SP</div>
+<span id="topName" style="font-size:14px;font-weight:600">Sales User</span>
+</div>
+</div>
+<div class="main" id="mainContent"></div>
+</div>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="orderDrawer"><div id="drawerContent"></div></div>
+
+<script src="api.js"></script>
+<script>
+const ERP = { currency: '₹' };
+
+setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(checkAuth, 600); }, 1000);
+
+async function checkAuth() {
+  document.getElementById('splash').style.display = 'none';
+  if(api.getToken()) {
+    try {
+      const res = await api.get('/auth/me');
+      document.getElementById('topName').innerText = res.user.name;
+      document.getElementById('topAvatar').innerText = res.user.name.substring(0,2).toUpperCase();
+      document.getElementById('app').style.display = 'flex';
+      navigate('dashboard', document.querySelector('.sidebar nav a'));
+      fetchUnread();
+    } catch(e) { document.getElementById('login').style.display = 'flex'; }
+  } else { document.getElementById('login').style.display = 'flex'; }
+}
+
+async function doLogin() {
+  const e=document.getElementById('loginUser').value, p=document.getElementById('loginPass').value;
+  try {
+    const res = await api.post('/auth/login', {email: e, password: p});
+    localStorage.setItem('erp_token', res.token); localStorage.setItem('erp_user', JSON.stringify(res.user));
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('topName').innerText = res.user.name;
+    document.getElementById('topAvatar').innerText = res.user.name.substring(0,2).toUpperCase();
+    document.getElementById('app').style.display = 'flex';
+    navigate('dashboard', document.querySelector('.sidebar nav a'));
+    fetchUnread();
+  } catch(err) {
+    const el = document.getElementById('loginError'); el.innerText = err.message; el.style.display = 'block';
+  }
+}
+
+async function fetchUnread() {
+  try {
+    const res = await api.get('/notifications/count');
+    const badge = document.getElementById('unreadCount');
+    if(res.data.unread > 0) { badge.style.display = 'flex'; badge.innerText = res.data.unread; }
+  } catch(e) {}
+}
+
+const titles = {dashboard:'Dashboard',orders:'Sales Orders',customers:'Customers',inventory:'Inventory',transfers:'Store Transfers',dispatch:'Logistics'};
+
+async function navigate(view, el) {
+  if(el) { document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active')); el.classList.add('active'); }
+  document.getElementById('pageTitle').textContent = titles[view]||view;
+  const m = document.getElementById('mainContent');
+  m.innerHTML = '<div class="loader" style="margin:40px auto"></div>';
+  try {
+    if(view==='dashboard') await renderDashboard(m);
+    else if(view==='orders') await renderOrders(m);
+    else if(view==='customers') await renderCustomers(m);
+    else if(view==='inventory') await renderInventory(m);
+    else if(view==='transfers') await renderTransfers(m);
+    else if(view==='dispatch') await renderDispatch(m);
+  } catch(err) { m.innerHTML = `<div class="alert-card critical">${err.message}</div>`; }
+}
+
+function statusBadge(s) {
+  const m={draft:'badge-gray',pending_approval:'badge-yellow',approved:'badge-blue',rejected:'badge-red',dispatched:'badge-purple',delivered:'badge-green',pending:'badge-yellow',received:'badge-green'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${(s||'').replace(/_/g,' ')}</span>`;
+}
+
+async function renderDashboard(el) {
+  const res = await api.get('/dashboard/sales');
+  const d = res.data;
+  const alertsRes = await api.get('/notifications');
+  const user = api.getUser();
+  
+  el.innerHTML = `
+<div class="grid grid-3 mb-20">
+  <div class="card"><div class="kpi-icon" style="background:#eef2ff;color:var(--primary)"><i class="ph ph-shopping-cart"></i></div><h3>Today's Orders</h3><div class="value">${d.today_orders||0}</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fef3c7;color:var(--warning)"><i class="ph ph-clock"></i></div><h3>Pending Approvals</h3><div class="value">${d.pending||0}</div></div>
+  <div class="card"><div class="kpi-icon" style="background:#fee2e2;color:var(--danger)"><i class="ph ph-warning"></i></div><h3>Low Stock Alerts</h3><div class="value">${d.low_stock||0}</div></div>
+</div>
+<div class="card"><h3><i class="ph ph-bell-ringing"></i> Recent System Alerts</h3>
+  <div style="margin-top:16px">
+    ${alertsRes.data.map(a=>`<div class="alert-card ${a.type==='order_rejected'?'critical':'info'}"><strong>${a.title}</strong><div style="margin-top:4px;opacity:0.8">${a.message}</div></div>`).join('') || '<p>No new alerts.</p>'}
+  </div>
+</div>`;
+}
+
+// ==== ORDERS ====
+let globalOrders = [], globalCustomers = [], globalInventory = [];
+async function renderOrders(el) {
+  const res = await api.get('/orders');
+  globalOrders = res.data;
+  el.innerHTML = `
+<div class="section-header"><h2>Sales Orders</h2><button class="btn btn-primary" onclick="openCreateOrder()"><i class="ph ph-plus"></i> Create Order</button></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Order No.</th><th>Customer</th><th>Status</th><th>Total Amount</th><th>Date</th></tr></thead><tbody>
+  ${globalOrders.map(o=>`<tr style="cursor:pointer" onclick="openDrawer(${o.id})"><td><strong>${o.order_no}</strong></td><td>${o.customer_name}</td><td>${statusBadge(o.status)}</td><td>${ERP.currency}${o.total_amount}</td><td>${new Date(o.created_at).toLocaleDateString()}</td></tr>`).join('')}
+</tbody></table></div></div>
+<div class="modal-overlay" id="createOrderModal"></div>`;
+}
+
+async function openDrawer(id) {
+  const res = await api.get('/orders/'+id);
+  const o = res.data;
+  document.getElementById('drawerContent').innerHTML = `
+<h2>${o.order_no} <button style="background:none;border:none;cursor:pointer;font-size:22px" onclick="closeDrawer()"><i class="ph ph-x"></i></button></h2>
+<div style="margin-bottom:20px;line-height:1.6;font-size:14px">
+  <strong>Customer:</strong> ${o.customer_name}<br>
+  <strong>Status:</strong> ${statusBadge(o.status)}<br>
+  <strong>Total:</strong> ${ERP.currency}${o.total_amount}<br>
+  <strong>Created By:</strong> ${o.created_by_name}<br>
+</div>
+<h3 style="font-size:14px;margin-bottom:8px">Order Items</h3>
+<div class="table-wrap"><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${o.items.map(i=>`<tr><td>${i.product_name}</td><td>${i.quantity}</td><td>${ERP.currency}${i.unit_price}</td></tr>`).join('')}
+</tbody></table></div>`;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('orderDrawer').classList.add('open');
+}
+function closeDrawer() { document.getElementById('drawerOverlay').classList.remove('open'); document.getElementById('orderDrawer').classList.remove('open'); }
+
+async function openCreateOrder() {
+  const [cRes, iRes] = await Promise.all([api.get('/customers?status=active'), api.get('/inventory?status=in_stock')]);
+  globalCustomers = cRes.data; globalInventory = iRes.data;
+  
+  const custOpts = globalCustomers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const prodOpts = globalInventory.map(p=>`<option value="${p.product_id}" data-price="${p.base_price}" data-gst="${p.gst_rate}">${p.product_name} (${ERP.currency}${p.base_price})</option>`).join('');
+  
+  const user = api.getUser();
+  const isAdmin = user && user.role === 'admin';
+  let branchOptsHTML = '';
+  if (isAdmin) {
+    try {
+      const bRes = await api.get('/branches');
+      const bOpts = bRes.data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+      branchOptsHTML = `<div class="form-group"><label style="color:var(--danger)">Select Branch (Required for Admin)</label><select id="coBranch"><option value="">-- Select --</option>${bOpts}</select></div>`;
+    } catch (e) { console.error('Failed to load branches', e); }
+  }
+
+  const m = document.getElementById('createOrderModal');
+  m.innerHTML = `<div class="modal" style="max-width:700px"><h2>New Order <button style="background:none;border:none;cursor:pointer;font-size:22px" onclick="document.getElementById('createOrderModal').classList.remove('open')"><i class="ph ph-x"></i></button></h2>
+${branchOptsHTML}
+<div class="form-group"><label>Select Customer</label><select id="coCustomer"><option value="">-- Select --</option>${custOpts}</select></div>
+<h3 style="font-size:14px;margin:20px 0 10px">Add Items</h3>
+<div id="orderItemsBox"></div>
+<button class="btn btn-outline" style="margin-bottom:20px" onclick="addOrderItemRow(\`${prodOpts}\`)"><i class="ph ph-plus"></i> Add Row</button>
+<div style="text-align:right;font-size:16px;font-weight:bold;margin-bottom:20px">Total Order Value: ${ERP.currency}<span id="coTotal">0</span></div>
+<button class="btn btn-primary" onclick="submitOrder()"><i class="ph ph-check"></i> Submit Order</button></div>`;
+  m.classList.add('open');
+  addOrderItemRow(prodOpts);
+}
+
+function addOrderItemRow(opts) {
+  const div=document.createElement('div'); div.className='form-row'; div.style='grid-template-columns: 2fr 1fr 1fr auto; margin-bottom:12px';
+  div.innerHTML=`<select class="oi-prod" onchange="calcOrderTotals()"><option value="">Select Product...</option>${opts}</select><input class="oi-qty" type="number" placeholder="Qty" value="1" onchange="calcOrderTotals()"><input class="oi-price" type="number" placeholder="Price" readonly style="background:#f1f5f9"><button class="btn btn-danger" onclick="this.parentElement.remove();calcOrderTotals()"><i class="ph ph-trash"></i></button>`;
+  document.getElementById('orderItemsBox').appendChild(div);
+  calcOrderTotals();
+}
+
+function calcOrderTotals() {
+  let total=0;
+  document.querySelectorAll('#orderItemsBox .form-row').forEach(row => {
+    const sel=row.querySelector('.oi-prod'); const opt=sel.options[sel.selectedIndex];
+    const price=opt && opt.value ? parseFloat(opt.dataset.price) : 0;
+    const qty=parseFloat(row.querySelector('.oi-qty').value)||0;
+    row.querySelector('.oi-price').value = price;
+    total += price * qty * (1 + (parseFloat(opt?.dataset.gst||18)/100)); // Incl GST roughly
+  });
+  document.getElementById('coTotal').innerText = Math.round(total).toLocaleString();
+}
+
+async function submitOrder() {
+  const cus = document.getElementById('coCustomer').value;
+  if(!cus) return alert('Select customer');
+  const items = [];
+  document.querySelectorAll('#orderItemsBox .form-row').forEach(row => {
+    const pId = row.querySelector('.oi-prod').value;
+    const qty = row.querySelector('.oi-qty').value;
+    const price = row.querySelector('.oi-price').value;
+    if(pId && qty > 0) items.push({product_id: parseInt(pId), quantity: parseInt(qty), unit_price: parseFloat(price)});
+  });
+  if(items.length===0) return alert('Add at least one item');
+  
+  const payload = { customer_id: cus, items };
+  const user = api.getUser();
+  if (user && user.role === 'admin') {
+    const bId = document.getElementById('coBranch').value;
+    if (!bId) return alert('Please select a branch (Admin requirement)');
+    payload.branch_id = parseInt(bId);
+  }
+  
+  try {
+    await api.post('/orders', payload);
+    document.getElementById('createOrderModal').classList.remove('open');
+    renderOrders(document.getElementById('mainContent'));
+  } catch(e) { alert(e.message); }
+}
+
+// ==== CUSTOMERS ====
+async function renderCustomers(el) {
+  const res=await api.get('/customers');
+  el.innerHTML=`<div class="section-header"><h2>Customers</h2><button class="btn btn-primary" onclick="openAddCustomer()"><i class="ph ph-plus"></i> Add Customer</button></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Phone</th><th>City</th><th>GSTIN</th></tr></thead><tbody>
+  ${res.data.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.contact_person}</td><td>${c.phone}</td><td>${c.city}</td><td>${c.gstin||'N/A'}</td></tr>`).join('')}
+</tbody></table></div></div>
+<div class="modal-overlay" id="addCustomerModal"></div>`;
+}
+
+async function openAddCustomer() {
+  const user = api.getUser();
+  const isAdmin = user && user.role === 'admin';
+  let branchOptsHTML = '';
+  if (isAdmin) {
+    try {
+      const bRes = await api.get('/branches');
+      const bOpts = bRes.data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+      branchOptsHTML = `<div class="form-group" style="grid-column: span 2;"><label style="color:var(--danger)">Select Branch (Required for Admin)</label><select id="acBranch"><option value="">-- Select --</option>${bOpts}</select></div>`;
+    } catch (e) { console.error('Failed to load branches', e); }
+  }
+
+  const m = document.getElementById('addCustomerModal');
+  m.innerHTML = `<div class="modal" style="max-width:600px"><h2>Add New Customer <button style="background:none;border:none;cursor:pointer;font-size:22px" onclick="document.getElementById('addCustomerModal').classList.remove('open')"><i class="ph ph-x"></i></button></h2>
+  <div class="grid grid-2" style="column-gap:15px">
+    ${branchOptsHTML}
+    <div class="form-group"><label>Business Name</label><input type="text" id="acName"></div>
+    <div class="form-group"><label>Type</label><select id="acType"><option value="Retail">Retail</option><option value="Dealer">Dealer</option><option value="Distributor">Distributor</option><option value="Corporate">Corporate</option></select></div>
+    <div class="form-group"><label>Contact Person</label><input type="text" id="acContact"></div>
+    <div class="form-group"><label>Phone</label><input type="text" id="acPhone"></div>
+    <div class="form-group"><label>City</label><input type="text" id="acCity"></div>
+    <div class="form-group"><label>State</label><input type="text" id="acState" value="Maharashtra"></div>
+    <div class="form-group" style="grid-column: span 2;"><label>Email</label><input type="email" id="acEmail"></div>
+    <div class="form-group" style="grid-column: span 2;"><label>GSTIN</label><input type="text" id="acGSTIN"></div>
+  </div>
+  <button class="btn btn-primary mt-20" onclick="submitCustomer()"><i class="ph ph-check"></i> Register Customer</button>
+  </div>`;
+  m.classList.add('open');
+}
+
+async function submitCustomer() {
+  const payload = {
+    name: document.getElementById('acName').value,
+    type: document.getElementById('acType').value,
+    contact_person: document.getElementById('acContact').value,
+    phone: document.getElementById('acPhone').value,
+    email: document.getElementById('acEmail').value,
+    city: document.getElementById('acCity').value,
+    state: document.getElementById('acState').value,
+    gstin: document.getElementById('acGSTIN').value
+  };
+  if(!payload.name || !payload.phone) return alert('Name and phone are strictly required.');
+  
+  const user = api.getUser();
+  if (user && user.role === 'admin') {
+    const bId = document.getElementById('acBranch')?.value;
+    if (!bId) return alert('Please select a branch (Admin requirement)');
+    payload.branch_id = parseInt(bId);
+  }
+  
+  try {
+    await api.post('/customers', payload);
+    document.getElementById('addCustomerModal').classList.remove('open');
+    renderCustomers(document.getElementById('mainContent'));
+  } catch(e) { alert(e.message); }
+}
+
+// ==== INVENTORY ====
+async function renderInventory(el) {
+  const res=await api.get('/inventory');
+  el.innerHTML=`<div class="section-header"><h2>Detailed Inventory Status</h2><button class="btn btn-primary" onclick="openAddInventory()"><i class="ph ph-plus"></i> Add Stock Entry</button></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Category</th><th>Product Name</th><th>SKU</th><th>Available</th><th>Min Level</th><th>Rack</th><th>Asset Value</th><th>Status</th></tr></thead><tbody>
+  ${res.data.map(i=>{
+    const val = Number(i.available_qty * i.base_price);
+    return `<tr>
+      <td><span style="font-size:12px;color:var(--text-secondary)">${i.category_name||'N/A'}</span></td>
+      <td><strong>${i.product_name}</strong></td>
+      <td>${i.sku}</td>
+      <td style="font-weight:600">${i.available_qty}</td>
+      <td>${i.min_stock_level}</td>
+      <td><code>${i.rack_location||'—'}</code></td>
+      <td>${ERP.currency}${val.toLocaleString('en-IN')}</td>
+      <td>${i.available_qty<=i.min_stock_level ? statusBadge('Low Stock') : statusBadge('In Stock')}</td>
+    </tr>`;
+  }).join('')}
+</tbody></table></div></div>
+<div class="modal-overlay" id="addInvModal"></div>`;
+}
+
+let globalProducts = [];
+
+async function openAddInventory() {
+  const [pRes, vRes] = await Promise.all([api.get('/products'), api.get('/vendors')]);
+  globalProducts = pRes.data;
+  const vendOpts = vRes.data.map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
+  const prodDatalist = globalProducts.map(p=>`<option value="${p.name} (SKU: ${p.sku})"></option>`).join('');
+
+  const user = api.getUser();
+  const isAdmin = user && user.role === 'admin';
+  let branchOptsHTML = '';
+  if (isAdmin) {
+    try {
+      const bRes = await api.get('/branches');
+      const bOpts = bRes.data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+      branchOptsHTML = `<div class="form-group" style="grid-column: span 2"><label style="color:var(--danger)">Select Branch (Required for Admin)</label><select id="aiBranch"><option value="">-- Select --</option>${bOpts}</select></div>`;
+    } catch (e) { console.error('Failed to load branches', e); }
+  }
+
+  const m = document.getElementById('addInvModal');
+  m.innerHTML = `<div class="modal" style="max-width:650px"><h2>New Stock Receipt <button style="background:none;border:none;cursor:pointer;font-size:22px" onclick="document.getElementById('addInvModal').classList.remove('open')"><i class="ph ph-x"></i></button></h2>
+  <div class="grid grid-2" style="column-gap:15px">
+    ${branchOptsHTML}
+    <div class="form-group" style="grid-column: span 2">
+      <label>Search Product (Type Name or SKU)</label>
+      <input type="text" list="prodList" id="aiProductSearch" placeholder="Type to search..." autocomplete="off">
+      <datalist id="prodList">${prodDatalist}</datalist>
+    </div>
+    <div class="form-group"><label>Quantity Received</label><input type="number" id="aiQty" placeholder="e.g. 50"></div>
+    <div class="form-group"><label>Unit Cost (${ERP.currency})</label><input type="number" id="aiCost" placeholder="0.00"></div>
+    <div class="form-group"><label>Supplier / Vendor</label><select id="aiVendor"><option value="">-- Select Supplier --</option>${vendOpts}</select></div>
+    <div class="form-group"><label>Rack / Storage Bin</label><input type="text" id="aiRack" placeholder="e.g. A1-Bin4"></div>
+    <div class="form-group" style="grid-column: span 2"><label>Set Min Stock Warning Level</label><input type="number" id="aiMinLevel" placeholder="e.g. 10"></div>
+  </div>
+  <button class="btn btn-primary mt-20" onclick="submitInventory()"><i class="ph ph-check"></i> Submit Receipt</button></div>`;
+  m.classList.add('open');
+}
+
+async function submitInventory() {
+  const searchVal = document.getElementById('aiProductSearch').value;
+  const qty = document.getElementById('aiQty').value;
+  
+  if (!searchVal || !qty || qty <= 0) return alert('Select a product and valid quantity');
+  
+  // Resolve searchVal back to product_id
+  const matchingProd = globalProducts.find(p => `${p.name} (SKU: ${p.sku})` === searchVal);
+  if (!matchingProd) return alert('Invalid product selected. Please pick from the list.');
+  
+  const pId = matchingProd.id;
+  const cost = document.getElementById('aiCost').value || 0;
+  const vendor = document.getElementById('aiVendor').value || 'Unknown Supplier';
+  const rack = document.getElementById('aiRack').value;
+  const minLvl = document.getElementById('aiMinLevel').value || 0;
+  
+  const notes = `Supplier: ${vendor} | Unit Cost: ${cost}`;
+
+  const payload = { 
+    product_id: parseInt(pId), 
+    quantity: parseInt(qty),
+    unit_cost: parseFloat(cost),
+    rack_location: rack,
+    min_stock_level: parseInt(minLvl),
+    notes: notes
+  };
+  
+  const user = api.getUser();
+  if (user && user.role === 'admin') {
+    const bId = document.getElementById('aiBranch')?.value;
+    if (!bId) return alert('Please select a branch (Admin requirement)');
+    payload.branch_id = parseInt(bId);
+  }
+  
+  try {
+    await api.post('/inventory/stock-entry', payload);
+    document.getElementById('addInvModal').classList.remove('open');
+    renderInventory(document.getElementById('mainContent'));
+  } catch(e) { alert(e.message); }
+}
+
+// ==== TRANSFERS ====
+async function renderTransfers(el) {
+  const res=await api.get('/transfers');
+  el.innerHTML=`<div class="section-header"><h2>Store Transfers</h2><button class="btn btn-primary" onclick="openRequestTransfer()"><i class="ph ph-plus"></i> Request Stock Transfer</button></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Ref</th><th>From</th><th>To</th><th>Status</th></tr></thead><tbody>
+  ${res.data.map(t=>`<tr><td><strong>${t.transfer_no}</strong></td><td>${t.from_branch_name}</td><td>${t.to_branch_name}</td><td>${statusBadge(t.status)}</td></tr>`).join('')}
+</tbody></table></div></div>
+<div class="modal-overlay" id="transferModal"></div>`;
+}
+
+async function openRequestTransfer() {
+  const [pRes, bRes] = await Promise.all([api.get('/products'), api.get('/branches')]);
+  const prodOpts = pRes.data.map(p=>`<option value="${p.id}">${p.name} (SKU: ${p.sku})</option>`).join('');
+  
+  const user = api.getUser();
+  const isAdmin = user && user.role === 'admin';
+  const allBranches = bRes.data;
+  
+  let fromBranchOpts = "";
+  let toBranchHTML = "";
+
+  if (isAdmin) {
+    fromBranchOpts = allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+    toBranchHTML = `<div class="form-group"><label>Destination Branch (Target Stock Holder)</label><select id="rtTo"><option value="">-- Select Destination --</option>${fromBranchOpts}</select></div>`;
+  } else {
+    fromBranchOpts = allBranches.filter(b => b.id !== user.branch_id).map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  }
+  
+  const m = document.getElementById('transferModal');
+  m.innerHTML = `<div class="modal" style="max-width:500px"><h2>Request Stock Transfer <button style="background:none;border:none;cursor:pointer;font-size:22px" onclick="document.getElementById('transferModal').classList.remove('open')"><i class="ph ph-x"></i></button></h2>
+  <div class="form-group"><label>Request From Branch (Current Holder)</label><select id="rtFrom"><option value="">-- Select Source --</option>${fromBranchOpts}</select></div>
+  ${toBranchHTML}
+  <div class="form-group"><label>Select Product</label><select id="rtProd"><option value="">-- Select Product --</option>${prodOpts}</select></div>
+  <div class="form-group"><label>Quantity Needed</label><input type="number" id="rtQty" placeholder="e.g. 50"></div>
+  <div class="form-group"><label>Notes (Optional)</label><textarea id="rtNotes" rows="2"></textarea></div>
+  <button class="btn btn-primary mt-20" onclick="submitTransferRequest()"><i class="ph ph-paper-plane"></i> Send Request</button>
+  </div>`;
+  m.classList.add('open');
+}
+
+async function submitTransferRequest() {
+  const from_id = document.getElementById('rtFrom').value;
+  const prod_id = document.getElementById('rtProd').value;
+  const qty = document.getElementById('rtQty').value;
+  const notes = document.getElementById('rtNotes').value;
+  
+  if(!from_id || !prod_id || !qty || qty<=0) return alert('Fill out all branch, product, and valid quantity requirements.');
+  
+  const user = api.getUser();
+  let to_branch_id = parseInt(user.branch_id, 10);
+  
+  if (user.role === 'admin') {
+    to_branch_id = parseInt(document.getElementById('rtTo').value, 10);
+  }
+  
+  const payload = {
+    from_branch_id: parseInt(from_id, 10),
+    to_branch_id: to_branch_id,
+    items: [{ product_id: parseInt(prod_id, 10), quantity: parseInt(qty, 10) }],
+    notes: notes
+  };
+  
+  if(!payload.to_branch_id) return alert('Destination branch selection required.');
+  if(payload.from_branch_id === payload.to_branch_id) return alert('Source and Destination branch cannot be the same!');
+  
+  try {
+    await api.post('/transfers', payload);
+    document.getElementById('transferModal').classList.remove('open');
+    renderTransfers(document.getElementById('mainContent'));
+  } catch(e) { alert(e.message); }
+}
+
+// ==== DISPATCH ====
+async function renderDispatch(el) {
+  const res=await api.get('/dispatches');
+  el.innerHTML=`<div class="section-header"><h2>Dispatch Logs</h2></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Dispatch No.</th><th>Order</th><th>Vehicle</th><th>Status</th></tr></thead><tbody>
+  ${res.data.map(d=>`<tr><td><strong>${d.dispatch_no}</strong></td><td>${d.order_no}</td><td>${d.vehicle_no||'N/A'}</td><td>${statusBadge(d.status)}</td></tr>`).join('')}
+</tbody></table></div></div>`;
+}
+
+</script>
+</body>
+</html>
